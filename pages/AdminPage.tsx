@@ -4,6 +4,7 @@ import { Input, TextArea } from '../components/Input';
 import { User } from '../types';
 import { Navigate } from 'react-router-dom';
 import { ADMIN_EMAILS } from '../constants';
+import { supabase } from '../supabaseClient';
 
 interface AdminPageProps {
   user: User | null;
@@ -33,16 +34,27 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
     return regex.test(url);
   };
 
-  const handleEpisodeSubmit = (e: React.FormEvent) => {
+  const handleEpisodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateSpotifyUrl(epUrl)) {
       setEpUrlError('Neplatná Spotify URL. Musí obsahovat open.spotify.com/episode/');
       return;
     }
     setEpUrlError('');
-    
-    // Simulate API call
-    console.log({ title: epTitle, url: epUrl, bonus: epBonus });
+
+    const { error } = await supabase
+      .from('episodes')
+      .insert({
+        title: epTitle,
+        spotify_url: epUrl,
+        bonus_text: epBonus,
+      });
+
+    if (error) {
+      showSuccess('Chyba při publikování epizody.');
+      return;
+    }
+
     showSuccess('EPIZODA PUBLIKOVÁNA!');
     
     // Reset
@@ -51,10 +63,21 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
     setEpBonus('');
   };
 
-  const handleChallengeSubmit = (e: React.FormEvent) => {
+  const handleChallengeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
-    console.log({ title: chTitle, content: chContent });
+
+    const { error } = await supabase
+      .from('challenges')
+      .insert({
+        title: chTitle,
+        content: chContent,
+      });
+
+    if (error) {
+      showSuccess('Chyba při publikování výzvy.');
+      return;
+    }
+
     showSuccess('VÝZVA PUBLIKOVÁNA!');
 
     // Reset

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Episode, Comment, User } from '../types';
 import Button from '../components/Button';
-import { MOCK_COMMENTS, ADMIN_EMAILS } from '../constants';
+import { ADMIN_EMAILS } from '../constants';
 import { ArrowLeft, Send } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 interface EpisodeDetailPageProps {
   episode: Episode;
@@ -39,10 +40,44 @@ const SimpleMarkdown: React.FC<{ content: string }> = ({ content }) => {
 };
 
 const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentUser, onBack }) => {
-  const [comments, setComments] = useState<Comment[]>(MOCK_COMMENTS.filter(c => c.episodeId === episode.id));
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   const isAdmin = currentUser && ADMIN_EMAILS.includes(currentUser.email);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      setLoadingComments(true);
+      setCommentError(null);
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('episode_id', episode.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        setCommentError('Nepodařilo se načíst komentáře.');
+        setLoadingComments(false);
+        return;
+      }
+
+      const mapped: Comment[] = (data || []).map((row: any) => ({
+        id: row.id,
+        userId: row.user_id,
+        username: 'uživatel', // Simplified; you can later join profiles for nicer names
+        content: row.content,
+        createdAt: new Date(row.created_at).toLocaleString('cs-CZ'),
+        episodeId: row.episode_id,
+      }));
+
+      setComments(mapped);
+      setLoadingComments(false);
+    };
+
+    fetchComments();
+  }, [episode.id]);
 
   const getSpotifyEmbedUrl = (url: string) => {
     try {
@@ -54,28 +89,53 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
     }
   };
 
-  const handlePostComment = (e: React.FormEvent) => {
+  const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !currentUser) return;
 
-    const comment: Comment = {
-      id: Date.now().toString(),
-      userId: currentUser.id,
-      username: currentUser.email.split('@')[0], 
-      content: newComment,
-      createdAt: 'Teď',
-      episodeId: episode.id
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        content: newComment,
+        user_id: currentUser.id,
+        episode_id: episode.id,
+      })
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      setCommentError('Komentář se nepodařilo odeslat.');
+      return;
+    }
+
+    const inserted: Comment = {
+      id: data.id,
+      userId: data.user_id,
+      username: 'uživatel',
+      content: data.content,
+      createdAt: new Date(data.created_at).toLocaleString('cs-CZ'),
+      episodeId: data.episode_id,
     };
 
-    setComments([comment, ...comments]);
+    setComments([inserted, ...comments]);
     setNewComment('');
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Opravdu smazat tento komentář?')) {
-      setComments(comments.filter(c => c.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Opravdu smazat tento komentář?')) return;
+
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      setCommentError('Komentář se nepodařilo smazat.');
+      return;
     }
-  }
+
+    setComments(comments.filter(c => c.id !== id));
+  };
 
   return (
     <div className="max-w-[800px] mx-auto px-4 py-8 flex flex-col items-center">
@@ -120,6 +180,10 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
           Co si o tom myslíš?
         </h3>
 
+        {commentError && (
+          <p className="text-red-600 font-bold mb-4">{commentError}</p>
+        )}
+
         {/* Comment Form */}
         <form onSubmit={handlePostComment} className="mb-10 relative">
           <textarea
@@ -139,7 +203,10 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
 
         {/* List */}
         <div className="flex flex-col gap-6">
-          {comments.map(comment => (
+          {loadingComments && (
+            <p className="text-center font-bold text-gray-500">Načítám komentáře...</p>
+          )}
+          {!loadingComments && comments.map(comment => (
             <div key={comment.id} className="bg-gray-50 border-2 border-black p-4 relative shadow-sm">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">

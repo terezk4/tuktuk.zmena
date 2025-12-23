@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Button from '../components/Button';
 import { User } from '../types';
 import { ADMIN_EMAILS } from '../constants';
+import { supabase } from '../supabaseClient';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -11,17 +12,51 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate Auth
-    const isAdmin = ADMIN_EMAILS.includes(email) || email.includes('admin');
-    const mockUser: User = {
-      id: '123',
-      email: email,
-      role: isAdmin ? 'admin' : 'user'
-    };
-    onLogin(mockUser);
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError || !data.user) {
+          throw signInError || new Error('Nepodařilo se přihlásit.');
+        }
+        const isAdmin = ADMIN_EMAILS.includes(data.user.email ?? '');
+        const loggedInUser: User = {
+          id: data.user.id,
+          email: data.user.email ?? '',
+          role: isAdmin ? 'admin' : 'user',
+        };
+        onLogin(loggedInUser);
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpError || !data.user) {
+          throw signUpError || new Error('Registrace selhala.');
+        }
+        const isAdmin = ADMIN_EMAILS.includes(data.user.email ?? '');
+        const registeredUser: User = {
+          id: data.user.id,
+          email: data.user.email ?? '',
+          role: isAdmin ? 'admin' : 'user',
+        };
+        onLogin(registeredUser);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Nastala chyba. Zkus to prosím znovu.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,8 +96,16 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             />
           </div>
 
-          <Button type="submit" fullWidth className="text-lg">
-            {isLogin ? 'Přihlásit se' : 'Registrovat'}
+          {error && (
+            <p className="text-red-600 font-bold text-sm border-t border-red-300 pt-2">
+              {error}
+            </p>
+          )}
+
+          <Button type="submit" fullWidth className="text-lg" disabled={loading}>
+            {loading
+              ? (isLogin ? 'Přihlašování...' : 'Registrace...')
+              : (isLogin ? 'Přihlásit se' : 'Registrovat')}
           </Button>
 
         </form>
