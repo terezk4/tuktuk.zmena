@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ťuk ťuk. Změna!</title>
+    <meta name="description" content="Podcast, který tě nenechá v klidu. Teď i s komunitou." />
+    
+    <!-- Google Fonts: Inter for that bold, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Configuration for Brand Colors and Shadows -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                pink: '#E91E63',
+                lime: '#CDDC39',
+                black: '#000000',
+                white: '#FFFFFF',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['monospace'], // Simple mono for textarea
+            },
+            boxShadow: {
+              'hard': '8px 8px 0px 0px #000000',
+              'hard-hover': '12px 12px 0px 0px #000000',
+              'hard-sm': '4px 4px 0px 0px #000000',
+              'none': '0px 0px 0px 0px #000000',
+            },
+            borderWidth: {
+              '3': '3px',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #ffffff;
+        color: #000000;
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar to match the vibe */
+      ::-webkit-scrollbar {
+        width: 12px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #000000;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #E91E63;
+        border: 2px solid #000000;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #CDDC39;
+      }
+      
+      /* Pattern grid for backgrounds */
+      .pattern-grid {
+        background-image: radial-gradient(#000000 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
