@@ -3,11 +3,11 @@ import EpisodeCard from '../components/EpisodeCard';
 import { Episode } from '../types';
 import { supabase } from '../supabaseClient';
 
-interface HomePageProps {
+interface EpisodesPageProps {
   onEpisodeClick: (id: string) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onEpisodeClick }) => {
+const EpisodesPage: React.FC<EpisodesPageProps> = ({ onEpisodeClick }) => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +49,12 @@ const HomePage: React.FC<HomePageProps> = ({ onEpisodeClick }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-4xl font-black uppercase text-brand-pink text-center mb-8 drop-shadow-[4px_4px_0px_#000]">
+        VŠECHNY EPIZODY
+      </h1>
+
       {/* Feed */}
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-6">
         {loading && (
           <div className="text-center font-bold py-8">Načítám epizody...</div>
         )}
@@ -72,9 +76,9 @@ const HomePage: React.FC<HomePageProps> = ({ onEpisodeClick }) => {
           />
         ))}
       </div>
-      
     </div>
   );
 };
 
-export default HomePage;
+export default EpisodesPage;
+

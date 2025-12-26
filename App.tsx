@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
+import EpisodesPage from './pages/EpisodesPage';
 import EpisodeDetailPage from './pages/EpisodeDetailPage';
 import CommunityPage from './pages/CommunityPage';
 import AdminPage from './pages/AdminPage';
@@ -134,6 +135,12 @@ const AppContent: React.FC = () => {
         <Route path="/feed" element={
           <ProtectedRoute user={user}>
             <HomePage onEpisodeClick={handleEpisodeClick} />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/episodes" element={
+          <ProtectedRoute user={user}>
+            <EpisodesPage onEpisodeClick={handleEpisodeClick} />
           </ProtectedRoute>
         } />
         

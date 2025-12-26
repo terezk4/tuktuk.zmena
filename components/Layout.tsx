@@ -17,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavigate, c
 
   const navLinks = [
     { label: 'DOMŮ', path: '/' },
+    { label: 'EPIZODY', path: '/episodes' },
     { label: 'KOMUNITA', path: '/community' },
   ];
 

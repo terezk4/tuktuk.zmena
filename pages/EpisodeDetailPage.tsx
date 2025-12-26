@@ -63,12 +63,15 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
         return;
       }
 
-      // For now, use 'uživatel' as fallback - username will be shown from currentUser when posting
-      // In future, we can add a profiles table or use user metadata
+      // Get current user's username for their comments
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUsername = userData.user?.user_metadata?.username || currentUser?.username || 'uživatel';
+
+      // Load username - use current user's username for their comments, otherwise fallback
       const mapped: Comment[] = (data || []).map((row: any) => ({
         id: row.id,
         userId: row.user_id,
-        username: row.user_id === currentUser?.id ? (currentUser.username || 'uživatel') : 'uživatel',
+        username: row.user_id === currentUser?.id ? currentUsername : (row.username || 'uživatel'),
         content: row.content,
         createdAt: new Date(row.created_at).toLocaleString('cs-CZ'),
         episodeId: row.episode_id,
@@ -95,12 +98,17 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
     e.preventDefault();
     if (!newComment.trim() || !currentUser) return;
 
+    // Get current username from user metadata
+    const { data: userData } = await supabase.auth.getUser();
+    const username = userData.user?.user_metadata?.username || currentUser.username || 'uživatel';
+
     const { data, error } = await supabase
       .from('comments')
       .insert({
         content: newComment,
         user_id: currentUser.id,
         episode_id: episode.id,
+        // username: username, // Commented out - add this column to database first
       } as any)
       .select('*')
       .single();
@@ -113,7 +121,7 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
     const inserted: Comment = {
       id: (data as any).id,
       userId: (data as any).user_id,
-      username: currentUser.username || 'uživatel',
+      username: username, // Use username from current user metadata
       content: (data as any).content,
       createdAt: new Date((data as any).created_at).toLocaleString('cs-CZ'),
       episodeId: (data as any).episode_id,

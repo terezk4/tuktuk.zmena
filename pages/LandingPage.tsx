@@ -1,12 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { APP_NAME } from '../constants';
+import { Challenge } from '../types';
+import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
   onEnter: () => void;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [loadingChallenge, setLoadingChallenge] = useState(true);
+
+  useEffect(() => {
+    const fetchChallenge = async () => {
+      setLoadingChallenge(true);
+      const { data, error } = await supabase
+        .from('challenges')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        // If no challenge exists, that's okay
+        if (error.code !== 'PGRST116') {
+          console.error('Error loading challenge:', error);
+        }
+        setLoadingChallenge(false);
+        return;
+      }
+
+      if (data) {
+        setChallenge({
+          id: data.id,
+          title: data.title,
+          content: data.content,
+          createdAt: data.created_at || new Date().toISOString(),
+        });
+      }
+      setLoadingChallenge(false);
+    };
+
+    fetchChallenge();
+  }, []);
+
   return (
     <div className="bg-brand-white">
       {/* Hero Section */}
@@ -37,17 +75,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
              <p className="font-bold text-gray-500">Exkluzivní obsah, který na Spotify nenajdeš.</p>
           </div>
 
-          {/* Non-functional Preview Card */}
-          <div className="opacity-75 pointer-events-none blur-[1px] select-none scale-95 grayscale">
-            <div className="bg-white border-3 border-brand-black p-8 shadow-hard">
-               <div className="bg-brand-lime w-16 h-6 border-3 border-brand-black mb-4"></div>
-               <div className="h-8 bg-black w-3/4 mb-4"></div>
-               <div className="h-4 bg-gray-300 w-full mb-2"></div>
-               <div className="h-4 bg-gray-300 w-full mb-2"></div>
-               <div className="h-4 bg-gray-300 w-5/6 mb-6"></div>
-               <div className="h-10 bg-brand-pink w-1/3 border-3 border-brand-black"></div>
+          {/* Current Challenge */}
+          {loadingChallenge ? (
+            <div className="text-center font-bold py-8">Načítám výzvu...</div>
+          ) : challenge ? (
+            <div className="relative bg-brand-lime border-3 border-brand-black p-6 md:p-8 shadow-hard mb-4">
+              {/* Tail of speech bubble */}
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-0 h-0 
+                border-l-[20px] border-l-transparent
+                border-r-[20px] border-r-transparent
+                border-t-[24px] border-t-brand-black">
+              </div>
+              <div className="absolute -bottom-[20px] left-1/2 transform -translate-x-1/2 w-0 h-0 
+                border-l-[16px] border-l-transparent
+                border-r-[16px] border-r-transparent
+                border-t-[20px] border-t-brand-lime z-10">
+              </div>
+
+              <h3 className="text-2xl md:text-3xl font-black uppercase text-center mb-3 leading-none">
+                {challenge.title}
+              </h3>
+              <div className="text-lg md:text-xl font-bold text-center leading-relaxed whitespace-pre-line">
+                {challenge.content}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white border-3 border-brand-black p-8 shadow-hard opacity-75">
+              <div className="text-center font-bold text-gray-400">
+                Zatím žádná výzva. Přidej první v admin sekci.
+              </div>
+            </div>
+          )}
           
           <div className="text-center mt-8">
             <p className="font-bold italic text-lg">...a mnohem víc.</p>
