@@ -21,14 +21,39 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
     setLoading(true);
 
     try {
+      // Check if Supabase is properly configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL_HERE' || supabaseUrl.includes('placeholder')) {
+        setError('Supabase není správně nakonfigurován. Zkontroluj .env soubor.');
+        setLoading(false);
+        return;
+      }
+
       if (isLogin) {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (signInError || !data.user) {
-          throw signInError || new Error('Nepodařilo se přihlásit.');
+        
+        if (signInError) {
+          // Handle specific error messages
+          if (signInError.message.includes('Invalid login credentials')) {
+            setError('Neplatné přihlašovací údaje. Zkontroluj email a heslo.');
+          } else if (signInError.message.includes('Failed to fetch')) {
+            setError('Nelze se připojit k serveru. Zkontroluj internetové připojení a Supabase konfiguraci.');
+          } else {
+            setError(signInError.message || 'Nepodařilo se přihlásit.');
+          }
+          setLoading(false);
+          return;
         }
+        
+        if (!data.user) {
+          setError('Nepodařilo se přihlásit. Zkus to prosím znovu.');
+          setLoading(false);
+          return;
+        }
+
         const isAdmin = ADMIN_EMAILS.includes(data.user.email ?? '');
         const loggedInUser: User = {
           id: data.user.id,
@@ -41,9 +66,28 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
           email,
           password,
         });
-        if (signUpError || !data.user) {
-          throw signUpError || new Error('Registrace selhala.');
+        
+        if (signUpError) {
+          // Handle specific error messages
+          if (signUpError.message.includes('User already registered')) {
+            setError('Uživatel s tímto emailem již existuje. Přihlas se prosím.');
+          } else if (signUpError.message.includes('Failed to fetch')) {
+            setError('Nelze se připojit k serveru. Zkontroluj internetové připojení a Supabase konfiguraci.');
+          } else if (signUpError.message.includes('Password')) {
+            setError('Heslo musí mít alespoň 6 znaků.');
+          } else {
+            setError(signUpError.message || 'Registrace selhala.');
+          }
+          setLoading(false);
+          return;
         }
+        
+        if (!data.user) {
+          setError('Registrace selhala. Zkus to prosím znovu.');
+          setLoading(false);
+          return;
+        }
+
         const isAdmin = ADMIN_EMAILS.includes(data.user.email ?? '');
         const registeredUser: User = {
           id: data.user.id,
@@ -53,8 +97,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         onLogin(registeredUser);
       }
     } catch (err: any) {
-      setError(err.message || 'Nastala chyba. Zkus to prosím znovu.');
-    } finally {
+      console.error('Auth error:', err);
+      if (err.message?.includes('Failed to fetch')) {
+        setError('Nelze se připojit k serveru. Zkontroluj, že máš správně nastavený .env soubor s VITE_SUPABASE_URL.');
+      } else {
+        setError(err.message || 'Nastala chyba. Zkus to prosím znovu.');
+      }
       setLoading(false);
     }
   };

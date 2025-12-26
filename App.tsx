@@ -107,8 +107,9 @@ const AppContent: React.FC = () => {
     navigate('/feed');
   };
 
-  const handleLogout = () => {
-    supabase.auth.signOut();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null); // Clear user state immediately after signOut
     navigate('/');
   };
 

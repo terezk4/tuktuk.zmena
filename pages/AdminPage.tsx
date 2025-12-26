@@ -18,6 +18,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
 
   const [activeTab, setActiveTab] = useState<'episode' | 'challenge'>('episode');
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Episode Form State
   const [epTitle, setEpTitle] = useState('');
@@ -51,7 +52,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       });
 
     if (error) {
-      showSuccess('Chyba při publikování epizody.');
+      showError(`Chyba při publikování epizody: ${error.message || 'Neznámá chyba'}`);
       return;
     }
 
@@ -74,7 +75,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       });
 
     if (error) {
-      showSuccess('Chyba při publikování výzvy.');
+      showError(`Chyba při publikování výzvy: ${error.message || 'Neznámá chyba'}`);
       return;
     }
 
@@ -86,8 +87,15 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
   };
 
   const showSuccess = (msg: string) => {
+    setErrorMsg(''); // Clear any existing error
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const showError = (msg: string) => {
+    setSuccessMsg(''); // Clear any existing success message
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000); // Show errors longer
   };
 
   return (
@@ -127,6 +135,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
         {successMsg && (
           <div className="absolute top-0 left-0 w-full bg-brand-lime border-b-3 border-brand-black p-4 text-center font-black animate-pulse z-10">
             ✓ {successMsg}
+          </div>
+        )}
+
+        {/* Error Toast */}
+        {errorMsg && (
+          <div className="absolute top-0 left-0 w-full bg-red-600 text-white border-b-3 border-brand-black p-4 text-center font-black animate-pulse z-10">
+            ✗ {errorMsg}
           </div>
         )}
 
