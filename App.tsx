@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import EpisodeDetailPage from './pages/EpisodeDetailPage';
 import CommunityPage from './pages/CommunityPage';
 import AdminPage from './pages/AdminPage';
+import ProfilePage from './pages/ProfilePage';
 import { User, Episode } from './types';
 import { supabase } from './supabaseClient';
 
@@ -78,6 +79,7 @@ const AppContent: React.FC = () => {
           id: data.user.id,
           email: data.user.email ?? '',
           role: isAdmin ? 'admin' : 'user',
+          username: data.user.user_metadata?.username || undefined,
         });
       }
     };
@@ -91,6 +93,7 @@ const AppContent: React.FC = () => {
           id: session.user.id,
           email: session.user.email ?? '',
           role: isAdmin ? 'admin' : 'user',
+          username: session.user.user_metadata?.username || undefined,
         });
       } else {
         setUser(null);
@@ -143,6 +146,12 @@ const AppContent: React.FC = () => {
         <Route path="/episode/:id" element={
           <ProtectedRoute user={user}>
              <EpisodeDetailWrapper user={user} />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/profile" element={
+          <ProtectedRoute user={user}>
+             <ProfilePage user={user} />
           </ProtectedRoute>
         } />
 

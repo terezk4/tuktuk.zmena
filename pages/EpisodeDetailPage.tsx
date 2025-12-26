@@ -63,10 +63,12 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
         return;
       }
 
+      // For now, use 'uživatel' as fallback - username will be shown from currentUser when posting
+      // In future, we can add a profiles table or use user metadata
       const mapped: Comment[] = (data || []).map((row: any) => ({
         id: row.id,
         userId: row.user_id,
-        username: 'uživatel', // Simplified; you can later join profiles for nicer names
+        username: row.user_id === currentUser?.id ? (currentUser.username || 'uživatel') : 'uživatel',
         content: row.content,
         createdAt: new Date(row.created_at).toLocaleString('cs-CZ'),
         episodeId: row.episode_id,
@@ -99,7 +101,7 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
         content: newComment,
         user_id: currentUser.id,
         episode_id: episode.id,
-      })
+      } as any)
       .select('*')
       .single();
 
@@ -109,12 +111,12 @@ const EpisodeDetailPage: React.FC<EpisodeDetailPageProps> = ({ episode, currentU
     }
 
     const inserted: Comment = {
-      id: data.id,
-      userId: data.user_id,
-      username: 'uživatel',
-      content: data.content,
-      createdAt: new Date(data.created_at).toLocaleString('cs-CZ'),
-      episodeId: data.episode_id,
+      id: (data as any).id,
+      userId: (data as any).user_id,
+      username: currentUser.username || 'uživatel',
+      content: (data as any).content,
+      createdAt: new Date((data as any).created_at).toLocaleString('cs-CZ'),
+      episodeId: (data as any).episode_id,
     };
 
     setComments([inserted, ...comments]);

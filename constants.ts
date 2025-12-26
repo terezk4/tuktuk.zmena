@@ -5,7 +5,8 @@ export const APP_NAME = "ŤUK ŤUK. ZMĚNA!";
 export const ADMIN_EMAILS = [
   'admin@tuktukzmena.cz',
   'producer@tuktukzmena.cz',
-  'demo@user.com' // Added for testing purposes as per typical MVP flows
+  'demo@user.com', // Added for testing purposes as per typical MVP flows
+  'tuktuk.zmena@gmail.com'
 ];
 
 export const MOCK_EPISODES: Episode[] = [

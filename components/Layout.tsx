@@ -57,6 +57,13 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavigate, c
             
             {user ? (
               <div className="flex items-center gap-4 border-l-2 border-gray-700 pl-4">
+                 <button 
+                   onClick={() => handleNav('/profile')} 
+                   className="text-brand-lime hover:text-white" 
+                   title="Profil"
+                 >
+                   <UserIcon size={20} />
+                 </button>
                  <span className="text-xs font-bold text-gray-400 hidden lg:block">{user.email}</span>
                  <button onClick={onLogout} className="text-brand-pink hover:text-white" title="Logout">
                    <LogOut size={20} />
@@ -95,9 +102,17 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onNavigate, c
                 </button>
               ))}
                {user ? (
-                 <button onClick={onLogout} className="text-left text-lg font-bold uppercase text-brand-pink flex items-center gap-2">
-                   <LogOut size={20} /> Odhlásit
-                 </button>
+                 <>
+                   <button 
+                     onClick={() => handleNav('/profile')} 
+                     className="text-left text-lg font-bold uppercase text-brand-lime flex items-center gap-2"
+                   >
+                     <UserIcon size={20} /> Profil
+                   </button>
+                   <button onClick={onLogout} className="text-left text-lg font-bold uppercase text-brand-pink flex items-center gap-2">
+                     <LogOut size={20} /> Odhlásit
+                   </button>
+                 </>
                ) : (
                   <button onClick={() => handleNav('/auth')} className="text-left text-lg font-bold uppercase text-brand-lime">
                     Vstoupit / Registrovat

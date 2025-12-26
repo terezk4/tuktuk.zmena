@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import { User } from '../types';
 import { ADMIN_EMAILS } from '../constants';
@@ -14,6 +14,66 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  // Check Supabase configuration on mount
+  useEffect(() => {
+    const checkSupabaseConfig = async () => {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/353d7741-f0a0-43ea-811d-fb047ab5994f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:22',message:'AuthPage env check start',data:{urlExists:!!supabaseUrl,urlType:typeof supabaseUrl,urlValue:supabaseUrl?.substring(0,50)||String(supabaseUrl),keyExists:!!supabaseAnonKey,keyType:typeof supabaseAnonKey,keyPrefix:supabaseAnonKey?.substring(0,30)||String(supabaseAnonKey)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
+      // Debug: log what we're getting (only first few chars of key for security)
+      console.log('🔍 Supabase Config Check:', {
+        url: supabaseUrl ? '✓ Set' : '✗ Missing',
+        key: supabaseAnonKey ? `✓ Set (${supabaseAnonKey.substring(0, 20)}...)` : '✗ Missing'
+      });
+      
+      const check1 = !supabaseUrl;
+      const check2 = !supabaseAnonKey;
+      const check3 = supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL_HERE';
+      const check4 = supabaseUrl.includes('placeholder');
+      const check5 = supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY_HERE';
+      const check6 = supabaseAnonKey.includes('placeholder');
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/353d7741-f0a0-43ea-811d-fb047ab5994f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:35',message:'AuthPage validation checks',data:{check1,check2,check3,check4,check5,check6,willFail:check1||check2||check3||check4||check5||check6},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
+      if (check1 || check2 || check3 || check4 || check5 || check6) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/353d7741-f0a0-43ea-811d-fb047ab5994f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:38',message:'Config error set',data:{reason:'validation failed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        setConfigError('Supabase není správně nakonfigurován. Zkontroluj .env soubor a ujisti se, že obsahuje VITE_SUPABASE_URL a VITE_SUPABASE_ANON_KEY.');
+        return;
+      }
+      
+      // Validate URL format
+      try {
+        new URL(supabaseUrl);
+      } catch {
+        setConfigError('Neplatný formát Supabase URL. Zkontroluj .env soubor.');
+        return;
+      }
+      
+      // Test connection by trying to get the current session (lightweight check)
+      try {
+        const { error: sessionError } = await supabase.auth.getSession();
+        if (sessionError && sessionError.message.includes('Failed to fetch')) {
+          setConfigError('Nelze se připojit k Supabase serveru. Zkontroluj, že URL a klíč jsou správné a server je dostupný.');
+        }
+      } catch (err: any) {
+        if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+          setConfigError('Nelze se připojit k Supabase serveru. Zkontroluj internetové připojení a konfiguraci.');
+        }
+      }
+    };
+    
+    checkSupabaseConfig();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +83,23 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
     try {
       // Check if Supabase is properly configured
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (!supabaseUrl || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL_HERE' || supabaseUrl.includes('placeholder')) {
-        setError('Supabase není správně nakonfigurován. Zkontroluj .env soubor.');
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey || 
+          supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL_HERE' || 
+          supabaseUrl.includes('placeholder') ||
+          supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY_HERE' ||
+          supabaseAnonKey.includes('placeholder')) {
+        setError('Supabase není správně nakonfigurován. Zkontroluj .env soubor a ujisti se, že obsahuje VITE_SUPABASE_URL a VITE_SUPABASE_ANON_KEY.');
+        setLoading(false);
+        return;
+      }
+      
+      // Validate URL format
+      try {
+        new URL(supabaseUrl);
+      } catch {
+        setError('Neplatný formát Supabase URL. Zkontroluj .env soubor.');
         setLoading(false);
         return;
       }
@@ -144,13 +219,26 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             />
           </div>
 
-          {error && (
+          {configError && (
+            <div className="bg-red-50 border-2 border-red-500 p-4 rounded">
+              <p className="text-red-700 font-bold text-sm">
+                {configError}
+              </p>
+              <p className="text-red-600 text-xs mt-2 font-mono">
+                Vytvoř .env soubor v kořenovém adresáři projektu s:<br/>
+                VITE_SUPABASE_URL=https://tvuj-projekt.supabase.co<br/>
+                VITE_SUPABASE_ANON_KEY=tvuj_anon_key
+              </p>
+            </div>
+          )}
+          
+          {error && !configError && (
             <p className="text-red-600 font-bold text-sm border-t border-red-300 pt-2">
               {error}
             </p>
           )}
 
-          <Button type="submit" fullWidth className="text-lg" disabled={loading}>
+          <Button type="submit" fullWidth className="text-lg" disabled={loading || !!configError}>
             {loading
               ? (isLogin ? 'Přihlašování...' : 'Registrace...')
               : (isLogin ? 'Přihlásit se' : 'Registrovat')}
@@ -168,11 +256,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
               {isLogin ? 'Registruj se' : 'Přihlas se'}
             </button>
           </p>
-
-          <div className="text-xs text-gray-400 font-mono border-t border-gray-200 pt-2">
-             <p>Pro Admin přístup použij:</p>
-             <p>admin@tuktukzmena.cz</p>
-          </div>
         </div>
 
       </div>

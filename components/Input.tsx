@@ -3,6 +3,7 @@ import React from 'react';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
+  helpText?: string;
 }
 
 interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -10,7 +11,7 @@ interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   error?: string;
 }
 
-export const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => {
+export const Input: React.FC<InputProps> = ({ label, error, helpText, className = '', ...props }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
       <label className="font-bold text-lg uppercase">{label}</label>
@@ -25,6 +26,7 @@ export const Input: React.FC<InputProps> = ({ label, error, className = '', ...p
         {...props}
       />
       {error && <span className="text-red-600 font-bold text-sm">⚠ {error}</span>}
+      {helpText && !error && <span className="text-xs text-gray-500">{helpText}</span>}
     </div>
   );
 };
