@@ -87,15 +87,22 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
   const handleChallengeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('challenges')
       .insert({
         title: chTitle,
         content: chContent,
-      });
+      })
+      .select();
 
     if (error) {
-      showError(`Chyba při publikování výzvy: ${error.message || 'Neznámá chyba'}`);
+      console.error('Error inserting challenge:', error);
+      // Detailnější error message pro RLS chyby
+      let errorMessage = error.message || 'Neznámá chyba';
+      if (error.code === '42501' || error.message?.includes('row-level') || error.message?.includes('policy')) {
+        errorMessage = 'Chyba oprávnění: Zkontroluj Row Level Security (RLS) policies v Supabase pro tabulku challenges. Ujisti se, že máte oprávnění pro INSERT.';
+      }
+      showError(`Chyba při publikování výzvy: ${errorMessage}`);
       return;
     }
 
@@ -246,7 +253,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       .eq('id', id);
 
     if (error) {
-      showError(`Chyba při mazání výzvy: ${error.message}`);
+      console.error('Error deleting challenge:', error);
+      let errorMessage = error.message || 'Neznámá chyba';
+      if (error.code === '42501' || error.message?.includes('row-level') || error.message?.includes('policy')) {
+        errorMessage = 'Chyba oprávnění: Zkontroluj Row Level Security (RLS) policies v Supabase pro tabulku challenges. Ujisti se, že máte oprávnění pro DELETE.';
+      }
+      showError(`Chyba při mazání výzvy: ${errorMessage}`);
       return;
     }
 
@@ -268,7 +280,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       .eq('id', editingChallenge.id);
 
     if (error) {
-      showError(`Chyba při aktualizaci výzvy: ${error.message}`);
+      console.error('Error updating challenge:', error);
+      let errorMessage = error.message || 'Neznámá chyba';
+      if (error.code === '42501' || error.message?.includes('row-level') || error.message?.includes('policy')) {
+        errorMessage = 'Chyba oprávnění: Zkontroluj Row Level Security (RLS) policies v Supabase pro tabulku challenges. Ujisti se, že máte oprávnění pro UPDATE.';
+      }
+      showError(`Chyba při aktualizaci výzvy: ${errorMessage}`);
       return;
     }
 
